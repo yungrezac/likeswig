@@ -4,16 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TikTok Follower Goal Widget</title>
-    <!-- Подключаем Tailwind CSS для красивого дизайна -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Подключаем шрифты Google -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <!-- Подключаем клиентскую библиотеку Socket.IO -->
+    <script src="/socket.io/socket.io.js"></script>
     <style>
         body {
             font-family: 'Poppins', sans-serif;
             margin: 0;
             padding: 0;
-            /* Прозрачный фон для OBS */
             background-color: transparent; 
             overflow: hidden;
             display: flex;
@@ -22,21 +21,19 @@
             height: 100vh;
         }
 
-        /* Если открыто просто в браузере без OBS, добавим темный фон для наглядности */
         body:not(.obs-mode) {
             background-color: #0f0f13;
             background-image: radial-gradient(circle at 50% 50%, #1a1a24 0%, #0f0f13 100%);
         }
 
         .glass-panel {
-            background: rgba(20, 20, 25, 0.6);
+            background: rgba(20, 20, 25, 0.7);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
             border: 1px solid rgba(255, 255, 255, 0.1);
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255,255,255,0.05);
         }
 
-        /* Фирменные цвета TikTok */
         .text-tiktok {
             background: linear-gradient(90deg, #00f2fe 0%, #fe0979 100%);
             -webkit-background-clip: text;
@@ -47,7 +44,6 @@
             background: linear-gradient(135deg, #00f2fe 0%, #fe0979 100%);
         }
 
-        /* Анимация пульсации для цели */
         @keyframes pulse-glow {
             0%, 100% { text-shadow: 0 0 10px rgba(254, 9, 121, 0.2); transform: scale(1); }
             50% { text-shadow: 0 0 20px rgba(254, 9, 121, 0.6); transform: scale(1.05); }
@@ -56,7 +52,6 @@
             animation: pulse-glow 2s infinite;
         }
 
-        /* Анимация появления уведомления */
         .alert-active {
             opacity: 1 !important;
             transform: translateY(0) scale(1) !important;
@@ -68,181 +63,181 @@
             backdrop-filter: blur(10px);
         }
 
-        /* Анимация изменения цифр */
+        .promo-bg {
+            background: rgba(10, 10, 15, 0.9);
+            border: 2px solid #fe0979;
+            box-shadow: 0 0 30px rgba(254, 9, 121, 0.4);
+            backdrop-filter: blur(10px);
+        }
+
         .pop-animation {
             animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
         @keyframes pop {
             0% { transform: scale(1); }
-            50% { transform: scale(1.3); }
+            50% { transform: scale(1.2); }
             100% { transform: scale(1); }
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-5deg); }
+            75% { transform: rotate(5deg); }
+        }
+        .animate-shake {
+            animation: shake 0.5s ease-in-out infinite;
         }
     </style>
 </head>
 <body class="text-white antialiased">
 
-    <!-- ЭКРАН НАСТРОЙКИ (Показывается, если юзернейм не указан в URL) -->
+    <!-- ЭКРАН НАСТРОЙКИ -->
     <div id="setupScreen" class="hidden flex-col items-center justify-center glass-panel p-8 rounded-3xl w-80 text-center relative overflow-hidden">
-        <div class="absolute -top-16 -left-16 w-32 h-32 bg-[#00f2fe] rounded-full mix-blend-screen filter blur-[60px] opacity-40"></div>
-        <div class="absolute -bottom-16 -right-16 w-32 h-32 bg-[#fe0979] rounded-full mix-blend-screen filter blur-[60px] opacity-40"></div>
-        
         <h2 class="text-xl font-bold mb-2 relative z-10">Настройка виджета</h2>
         <p class="text-xs text-gray-400 mb-6 relative z-10">Введите ваш TikTok юзернейм</p>
-        
         <div class="relative w-full mb-4 z-10">
             <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 font-bold">@</span>
-            <input type="text" id="usernameInput" placeholder="username" class="w-full bg-black/50 border border-gray-600 rounded-xl py-3 pl-8 pr-4 text-white placeholder-gray-500 focus:outline-none focus:border-[#00f2fe] transition-colors">
+            <input type="text" id="usernameInput" placeholder="username" class="w-full bg-black/50 border border-gray-600 rounded-xl py-3 pl-8 pr-4 text-white focus:outline-none focus:border-[#00f2fe]">
         </div>
-        
-        <button onclick="startWidget()" class="w-full bg-tiktok text-white font-bold py-3 rounded-xl shadow-lg hover:shadow-[0_0_20px_rgba(254,9,121,0.5)] transition-all transform hover:scale-105 active:scale-95 z-10">
+        <button onclick="startWidget()" class="w-full bg-tiktok text-white font-bold py-3 rounded-xl shadow-lg hover:shadow-[0_0_20px_rgba(254,9,121,0.5)] transition-all">
             Создать виджет
         </button>
     </div>
 
     <!-- ОСНОВНОЙ ВИДЖЕТ (Для OBS) -->
-    <div id="widgetContainer" class="hidden relative w-80 h-32 glass-panel rounded-3xl overflow-hidden shadow-2xl transition-all duration-300">
-        
-        <!-- Декоративные свечения -->
+    <div id="widgetContainer" class="hidden relative w-80 h-36 glass-panel rounded-3xl overflow-hidden shadow-2xl transition-all duration-300">
         <div class="absolute -top-10 -left-10 w-40 h-40 bg-[#00f2fe] rounded-full mix-blend-screen filter blur-[70px] opacity-30"></div>
         <div class="absolute -bottom-10 -right-10 w-40 h-40 bg-[#fe0979] rounded-full mix-blend-screen filter blur-[70px] opacity-30"></div>
 
-        <!-- Контент виджета -->
         <div class="relative z-10 h-full w-full flex flex-col items-center justify-center p-4">
-            
-            <!-- Юзернейм и иконка -->
-            <div class="flex items-center gap-2 mb-2">
-                <svg class="w-5 h-5 fill-current text-white drop-shadow-md" viewBox="0 0 448 512" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M448,209.91a210.06,210.06,0,0,1-122.77-39.25V349.38A162.55,162.55,0,1,1,185,188.31V278.2a74.62,74.62,0,1,0,52.23,71.18V0l88,0a121.18,121.18,0,0,0,1.86,22.17h0A122.18,122.18,0,0,0,381,102.39a121.43,121.43,0,0,0,67,20.14Z"/>
-                </svg>
-                <span id="displayUsername" class="text-white/90 font-semibold text-sm tracking-wider uppercase">@username</span>
+            <div class="flex items-center gap-2 mb-1">
+                <span class="text-tiktok font-black text-sm tracking-widest uppercase drop-shadow-md">ЦЕЛЬ ПО ПОДПИСЧИКАМ</span>
             </div>
-
-            <!-- Счетчики (Текущий / Цель) -->
-            <div class="flex items-baseline gap-3">
-                <span id="currentFollowers" class="text-4xl font-black text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.3)] transition-all duration-200">0</span>
-                <span class="text-gray-500 text-2xl font-light">/</span>
-                <span id="goalFollowers" class="text-2xl font-bold text-tiktok animate-goal">1</span>
+            <div class="flex items-baseline gap-3 mt-1">
+                <span id="currentFollowers" class="text-6xl font-black text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.4)] transition-all duration-200">0</span>
+                <span class="text-gray-500 text-3xl font-light">/</span>
+                <span id="goalFollowers" class="text-5xl font-bold text-tiktok animate-goal">1</span>
             </div>
-            
         </div>
 
-        <!-- OVERLAY: Уведомление о новом подписчике -->
+        <!-- Уведомление о новом подписчике (С РЕАЛЬНОЙ АВОЙ) -->
         <div id="newSubscriberAlert" class="absolute inset-0 alert-bg flex flex-col items-center justify-center opacity-0 transform translate-y-8 scale-95 pointer-events-none transition-all duration-400 ease-out z-50 rounded-3xl">
-            <div class="text-white font-black text-2xl mb-1 drop-shadow-lg tracking-wide uppercase">Новый подписчик!</div>
-            <div class="text-white/90 text-sm font-semibold flex items-center gap-2">
-                <span>Цель обновлена</span>
-                <span class="text-xl">🚀</span>
+            <div class="flex items-center gap-3 mb-2 z-10">
+                <img id="subAvatar" src="https://api.dicebear.com/7.x/avataaars/svg?seed=1" class="w-12 h-12 rounded-full border-2 border-white shadow-lg bg-white/20 object-cover" alt="Avatar">
+                <div class="flex flex-col">
+                    <span class="text-white/80 text-[10px] font-bold uppercase tracking-wider">Новый подписчик!</span>
+                    <span id="subName" class="text-white font-black text-md drop-shadow-md leading-tight">...</span>
+                </div>
             </div>
-            <!-- Декоративные лучи в уведомлении -->
-            <div class="absolute inset-0 bg-[radial-gradient(circle,rgba(255,255,255,0.2)_0%,transparent_60%)] pointer-events-none"></div>
+            <div class="text-white font-bold text-xs bg-black/20 px-3 py-1 rounded-full z-10 mt-1">
+                Цель обновлена! 🚀
+            </div>
+        </div>
+
+        <!-- Анимация раз в 2 минуты -->
+        <div id="promoAlert" class="absolute inset-0 promo-bg flex flex-col items-center justify-center opacity-0 transform scale-110 pointer-events-none transition-all duration-500 ease-out z-40 rounded-3xl p-3 text-center">
+            <div class="text-3xl mb-1 animate-shake">🔥</div>
+            <div class="text-white font-black text-[15px] drop-shadow-lg tracking-wide uppercase leading-tight">
+                Ребята, осталась <span class="text-tiktok text-xl">1</span> подписка!
+            </div>
+            <div class="text-gray-300 text-xs font-semibold mt-2 bg-white/10 px-3 py-1 rounded-full">
+                Помогите закрыть цель! 🎯
+            </div>
         </div>
     </div>
 
     <script>
-        // Инициализация переменных
         let username = "";
         let currentCount = 0;
-        let isSimulating = false; // Отключаем симуляцию, теперь данные реальные
+        
+        // Подключаемся к WebSocket серверу
+        const socket = io();
 
-        // Элементы DOM
         const setupScreen = document.getElementById('setupScreen');
         const widgetContainer = document.getElementById('widgetContainer');
-        const displayUsername = document.getElementById('displayUsername');
         const currentFollowersEl = document.getElementById('currentFollowers');
         const goalFollowersEl = document.getElementById('goalFollowers');
         const alertOverlay = document.getElementById('newSubscriberAlert');
+        const promoAlert = document.getElementById('promoAlert');
+        const subAvatarEl = document.getElementById('subAvatar');
+        const subNameEl = document.getElementById('subName');
 
-        // Проверяем URL параметры
         const urlParams = new URLSearchParams(window.location.search);
         const urlUser = urlParams.get('user');
 
         if (urlUser) {
-            // Если запущен из OBS с параметром ?user=имя
             document.body.classList.add('obs-mode');
             startWidget(urlUser);
         } else {
-            // Если открыт в браузере для настройки
             setupScreen.classList.remove('hidden');
             setupScreen.classList.add('flex');
         }
 
-        // Функция запуска виджета
         function startWidget(customUser = null) {
             username = customUser || document.getElementById('usernameInput').value.trim();
             if (!username) return;
-
-            // Убираем @ если пользователь ввел с ним
             username = username.replace('@', '');
 
-            // Обновляем UI
             setupScreen.classList.add('hidden');
             setupScreen.classList.remove('flex');
             widgetContainer.classList.remove('hidden');
-            displayUsername.textContent = `@${username}`;
 
-            // Если это настройка в браузере, покажем подсказку с URL
-            if (!customUser) {
-                const obsUrl = `${window.location.href.split('?')[0]}?user=${username}`;
-                console.log("Ссылка для OBS:", obsUrl);
-                // Копируем в буфер (если разрешено браузером)
-                try {
-                    navigator.clipboard.writeText(obsUrl);
-                    alert("Виджет запущен!\n\nСсылка скопирована в буфер обмена.\nВставьте её в OBS в источник 'Браузер' с шириной 350 и высотой 150.");
-                } catch(e) {}
-            }
-
-            // Инициализируем начальные данные
+            // 1. Загружаем изначальное число
             fetchInitialData();
+            
+            // 2. Отправляем серверу команду "Слушать этот стрим"
+            socket.emit('set_username', username);
 
-            // Запускаем цикл проверки
-            // ВАЖНО: Проверяем раз в 10 секунд, чтобы TikTok не забанил ваш IP за спам
-            setInterval(checkFollowers, 10000); 
+            // 3. Запускаем фоновую проверку на случай отписок (каждые 15 сек)
+            setInterval(checkFollowers, 15000); 
+
+            // 4. Запуск анимации с призывом каждые 2 минуты
+            setInterval(showPromoAnimation, 120000);
         }
 
-        // --- ЛОГИКА ДАННЫХ --- //
+        // === РЕАЛ-ТАЙМ СЛУШАТЕЛЬ ===
+        // Сервер пришлет это событие ТОЛЬКО если сейчас идет прямой эфир и кто-то подписался
+        socket.on('new_subscriber_live', (data) => {
+            console.log("Реальный подписчик с трансляции!", data);
+            
+            // Увеличиваем счетчик (так как знаем, что кто-то подписался)
+            currentCount++;
+            
+            // Показываем реальную аву и ник
+            triggerRealSubscriberEvent(data.avatar, data.nickname);
+        });
 
         async function fetchInitialData() {
             try {
-                // Обращаемся к нашему серверу (относительный путь работает и локально, и на Railway)
                 const response = await fetch(`/api/followers/${username}`);
                 const data = await response.json();
-                
                 if (data.followers !== undefined) {
                     currentCount = data.followers;
                     updateNumbers(currentCount);
                 }
             } catch (err) {
-                console.error("Ошибка при первоначальной загрузке:", err);
+                console.error("Ошибка загрузки:", err);
                 updateNumbers(0);
             }
         }
 
+        // Эта функция просто проверяет общее число в фоне
         async function checkFollowers() {
-            if (isSimulating) return;
-
             try {
-                // Обращаемся к нашему серверу за свежими данными
                 const response = await fetch(`/api/followers/${username}`);
                 const data = await response.json();
                 
                 if (data.followers !== undefined) {
-                    processNewCount(data.followers);
+                    // Если число выросло как-то вне эфира
+                    if (data.followers > currentCount) {
+                        currentCount = data.followers;
+                        updateNumbers(currentCount);
+                    } else if (data.followers < currentCount) {
+                        currentCount = data.followers;
+                        updateNumbers(currentCount);
+                    }
                 }
-            } catch (err) {
-                console.error("Ошибка при проверке подписчиков:", err);
-            }
-        }
-
-        function processNewCount(newCount) {
-            if (newCount > currentCount) {
-                // Если счетчик увеличился - запускаем праздник!
-                currentCount = newCount;
-                triggerNewSubscriberEvent();
-            } else if (newCount < currentCount) {
-                // Если кто-то отписался, просто тихо обновляем цифры
-                currentCount = newCount;
-                updateNumbers(currentCount);
-            }
+            } catch (err) {}
         }
 
         function updateNumbers(count) {
@@ -250,22 +245,33 @@
             goalFollowersEl.textContent = (count + 1).toLocaleString('ru-RU');
         }
 
-        function triggerNewSubscriberEvent() {
-            // Показываем оверлей "Новый подписчик!"
+        function triggerRealSubscriberEvent(avatarUrl, nickname) {
+            // Вставляем данные с TikTok
+            subAvatarEl.src = avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${Math.random()}`;
+            
+            // Обрезаем длинные имена, чтобы не ломать дизайн
+            if (nickname && nickname.length > 15) nickname = nickname.substring(0, 15) + '...';
+            subNameEl.textContent = nickname || "Новый зритель";
+
             alertOverlay.classList.add('alert-active');
             
-            // Анимация прыжка цифр
             currentFollowersEl.classList.remove('pop-animation');
-            void currentFollowersEl.offsetWidth; // trigger reflow
+            void currentFollowersEl.offsetWidth; 
             currentFollowersEl.classList.add('pop-animation');
 
-            // Обновляем цифры сразу
             updateNumbers(currentCount);
 
-            // Прячем оверлей через 2.5 секунды
             setTimeout(() => {
                 alertOverlay.classList.remove('alert-active');
-            }, 2500);
+            }, 5000); // Показываем карточку 5 секунд
+        }
+
+        function showPromoAnimation() {
+            if (alertOverlay.classList.contains('alert-active')) return;
+            promoAlert.classList.add('alert-active');
+            setTimeout(() => {
+                promoAlert.classList.remove('alert-active');
+            }, 6000);
         }
     </script>
 </body>
