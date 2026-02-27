@@ -35,19 +35,29 @@
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255,255,255,0.05);
         }
 
-        .text-tiktok {
-            background: linear-gradient(90deg, #00f2fe 0%, #fe0979 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
         .bg-tiktok {
             background: linear-gradient(135deg, #00f2fe 0%, #fe0979 100%);
         }
 
+        /* Тень для читаемости текста на любом фоне стрима (четкая черная обводка + свечение) */
+        .stream-shadow {
+            text-shadow: 
+                -1.5px -1.5px 0 #000,  
+                 1.5px -1.5px 0 #000,
+                -1.5px  1.5px 0 #000,
+                 1.5px  1.5px 0 #000,
+                 0px  4px 15px rgba(0, 0, 0, 0.8);
+        }
+
         @keyframes pulse-glow {
-            0%, 100% { text-shadow: 0 0 10px rgba(254, 9, 121, 0.2), 0 2px 4px rgba(0,0,0,0.8); transform: scale(1); }
-            50% { text-shadow: 0 0 20px rgba(254, 9, 121, 0.6), 0 2px 4px rgba(0,0,0,0.8); transform: scale(1.05); }
+            0%, 100% { 
+                text-shadow: -1.5px -1.5px 0 #000, 1.5px -1.5px 0 #000, -1.5px 1.5px 0 #000, 1.5px 1.5px 0 #000, 0 0 10px rgba(254, 9, 121, 0.5); 
+                transform: scale(1); 
+            }
+            50% { 
+                text-shadow: -1.5px -1.5px 0 #000, 1.5px -1.5px 0 #000, -1.5px 1.5px 0 #000, 1.5px 1.5px 0 #000, 0 0 25px rgba(254, 9, 121, 1); 
+                transform: scale(1.05); 
+            }
         }
         .animate-goal {
             animation: pulse-glow 2s infinite;
@@ -76,11 +86,6 @@
         .animate-shake {
             animation: shake 0.5s ease-in-out infinite;
         }
-
-        /* Тень для читаемости текста на любом фоне стрима */
-        .stream-shadow {
-            filter: drop-shadow(0px 3px 5px rgba(0, 0, 0, 0.9));
-        }
     </style>
 </head>
 <body class="text-white antialiased">
@@ -106,17 +111,23 @@
         <div class="absolute -bottom-10 -right-10 w-40 h-40 bg-[#fe0979] rounded-full mix-blend-screen filter blur-[60px] opacity-50 pointer-events-none"></div>
 
         <div class="relative z-10 h-full w-full flex flex-col items-center justify-center p-4">
-            <div class="flex items-center gap-2 mb-1">
-                <span class="text-tiktok font-black text-sm tracking-widest uppercase stream-shadow">ЦЕЛЬ ПО ПОДПИСЧИКАМ</span>
+            
+            <!-- Улучшенный стильный заголовок -->
+            <div class="flex items-center mb-1">
+                <span class="font-black text-sm tracking-[0.25em] uppercase stream-shadow">
+                    <span class="text-[#00f2fe]">ЦЕЛЬ</span> <span class="text-white">ПО ПОДПИСЧИКАМ</span>
+                </span>
             </div>
-            <div class="flex items-baseline gap-3 mt-1 stream-shadow">
-                <span id="currentFollowers" class="text-6xl font-black text-white transition-all duration-200">0</span>
-                <span class="text-white text-3xl font-bold opacity-80">/</span>
-                <span id="goalFollowers" class="text-5xl font-bold text-tiktok animate-goal">1</span>
+            
+            <!-- Красивые контрастные цифры -->
+            <div class="flex items-baseline justify-center gap-1 mt-1">
+                <span id="currentFollowers" class="text-7xl font-black text-white stream-shadow transition-all duration-200 tracking-tighter">0</span>
+                <span class="text-white/50 text-4xl font-light mx-3 stream-shadow">/</span>
+                <span id="goalFollowers" class="text-5xl font-black text-[#fe0979] animate-goal tracking-tighter inline-block">1</span>
             </div>
         </div>
 
-        <!-- Уведомление о новом подписчике (Только текст и аватар, без фона) -->
+        <!-- Уведомление о новом подписчике -->
         <div id="newSubscriberAlert" class="absolute inset-0 flex flex-col items-center justify-center opacity-0 transform translate-y-8 scale-95 pointer-events-none transition-all duration-400 ease-out z-50">
             <div class="flex items-center gap-5 z-10 stream-shadow">
                 <img id="subAvatar" src="https://api.dicebear.com/7.x/avataaars/svg?seed=1" class="w-24 h-24 rounded-full border-4 border-white object-cover" alt="Avatar">
@@ -127,14 +138,14 @@
             </div>
         </div>
 
-        <!-- Анимация раз в 2 минуты (Только текст, без фона) -->
+        <!-- Анимация раз в 2 минуты -->
         <div id="promoAlert" class="absolute inset-0 flex flex-col items-center justify-center opacity-0 transform scale-110 pointer-events-none transition-all duration-500 ease-out z-40 text-center">
-            <div class="text-3xl mb-1 animate-shake stream-shadow">🔥</div>
-            <div class="text-white font-black text-[15px] tracking-wide uppercase leading-tight stream-shadow">
-                Ребята, осталась <span class="text-tiktok text-xl">1</span> подписка!
+            <div class="text-4xl mb-2 animate-shake stream-shadow">🔥</div>
+            <div class="font-black text-[16px] tracking-wide uppercase leading-tight stream-shadow text-white">
+                Ребята, осталась <span class="text-[#00f2fe] text-2xl mx-1">1</span> подписка!
             </div>
-            <div class="text-[#fe0979] text-sm font-bold mt-1 stream-shadow">
-                Помогите закрыть цель! 🎯
+            <div class="text-[#fe0979] text-sm font-black mt-1 stream-shadow tracking-wider">
+                ПОМОГИТЕ ЗАКРЫТЬ ЦЕЛЬ! 🎯
             </div>
         </div>
     </div>
