@@ -105,7 +105,7 @@
     </div>
 
     <!-- ОСНОВНОЙ ВИДЖЕТ (Для OBS) -->
-    <div id="widgetContainer" class="hidden relative w-80 h-36 glass-panel rounded-3xl overflow-hidden shadow-2xl transition-all duration-300">
+    <div id="widgetContainer" class="hidden relative w-80 h-32 glass-panel rounded-3xl overflow-hidden shadow-2xl transition-all duration-300">
         <div class="absolute -top-10 -left-10 w-40 h-40 bg-[#00f2fe] rounded-full mix-blend-screen filter blur-[70px] opacity-30"></div>
         <div class="absolute -bottom-10 -right-10 w-40 h-40 bg-[#fe0979] rounded-full mix-blend-screen filter blur-[70px] opacity-30"></div>
 
@@ -120,17 +120,14 @@
             </div>
         </div>
 
-        <!-- Уведомление о новом подписчике (С РЕАЛЬНОЙ АВОЙ) -->
+        <!-- Уведомление о новом подписчике (С РЕАЛЬНОЙ АВОЙ, без надписи "цель обновлена") -->
         <div id="newSubscriberAlert" class="absolute inset-0 alert-bg flex flex-col items-center justify-center opacity-0 transform translate-y-8 scale-95 pointer-events-none transition-all duration-400 ease-out z-50 rounded-3xl">
-            <div class="flex items-center gap-3 mb-2 z-10">
-                <img id="subAvatar" src="https://api.dicebear.com/7.x/avataaars/svg?seed=1" class="w-12 h-12 rounded-full border-2 border-white shadow-lg bg-white/20 object-cover" alt="Avatar">
+            <div class="flex items-center gap-4 z-10">
+                <img id="subAvatar" src="https://api.dicebear.com/7.x/avataaars/svg?seed=1" class="w-16 h-16 rounded-full border-2 border-white shadow-lg bg-white/20 object-cover" alt="Avatar">
                 <div class="flex flex-col">
-                    <span class="text-white/80 text-[10px] font-bold uppercase tracking-wider">Новый подписчик!</span>
-                    <span id="subName" class="text-white font-black text-md drop-shadow-md leading-tight">...</span>
+                    <span class="text-white/80 text-xs font-bold uppercase tracking-wider mb-0.5">Новый подписчик!</span>
+                    <span id="subName" class="text-white font-black text-xl drop-shadow-md leading-tight">...</span>
                 </div>
-            </div>
-            <div class="text-white font-bold text-xs bg-black/20 px-3 py-1 rounded-full z-10 mt-1">
-                Цель обновлена! 🚀
             </div>
         </div>
 
@@ -140,7 +137,7 @@
             <div class="text-white font-black text-[15px] drop-shadow-lg tracking-wide uppercase leading-tight">
                 Ребята, осталась <span class="text-tiktok text-xl">1</span> подписка!
             </div>
-            <div class="text-gray-300 text-xs font-semibold mt-2 bg-white/10 px-3 py-1 rounded-full">
+            <div class="text-gray-300 text-xs font-semibold mt-1 bg-white/10 px-3 py-1 rounded-full">
                 Помогите закрыть цель! 🎯
             </div>
         </div>
